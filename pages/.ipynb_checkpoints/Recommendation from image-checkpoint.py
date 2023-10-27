@@ -107,7 +107,7 @@ if uploaded_image is not None:
                     similarity.append((cosine_similarity(features_images[i][0].reshape(1, -1), features.reshape(1,-1)), int(features_images[i][1])))
                     # print(features)
                 # print(similarity)
-            for i in range(5):
+            for i in range(10):
                 # index_pos_'{}'.format(file) = []
                 # print(file)
                 if file == 'shirt':
@@ -133,14 +133,15 @@ if uploaded_image is not None:
                     with st.expander('Top 5 recommndations for short'):
                         if len(index_pos_short) != 0:
  
-                            columns = st.columns(5)
+                            columns = st.columns(10)
                             for i in range(len(columns)):
                                 with columns[i]:
                                     homepage_url = final_df.iloc[index_pos_shirts[i],2]
                                     # print(recommendations[i])
                                     image = cv2.imread('images_recommend/{}'.format(index_pos_short[i]) + '.png')
                                     image = cv2.resize(image, (224, 224))
-                                    st.write(final_df.iloc[index_pos_shirts[i],4])
+                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                    st.write(final_df.iloc[index_pos_short[i],4])
 
                                     st.image(image)
                                     # url = "https://www.streamlit.io"
@@ -153,14 +154,15 @@ if uploaded_image is not None:
                     with st.expander('Top 5 recommndations for Pants'):
                         if len(index_pos_pants) != 0:
                             
-                            columns = st.columns(5)
+                            columns = st.columns(10)
                             for i in range(len(columns)):
                                 with columns[i]:
                                     homepage_url = final_df.iloc[index_pos_shirts[i],2]
                                     # print(recommendations[i])
-                                    image = cv2.imread('images_recommend/{}'.format(index_pos_short[i]) + '.png')
+                                    image = cv2.imread('images_recommend/{}'.format(index_pos_pants[i]) + '.png')
                                     image = cv2.resize(image, (224, 224))
-                                    st.write(final_df.iloc[index_pos_shirts[i],4])
+                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                    st.write(final_df.iloc[index_pos_pants[i],4])
 
                                     st.image(image)
                                     # url = "https://www.streamlit.io"
@@ -174,13 +176,14 @@ if uploaded_image is not None:
                         if len(index_pos_shirts) != 0:
 
                             
-                            columns = st.columns(5)
+                            columns = st.columns(10)
                             for i in range(len(columns)):
                                 with columns[i]:
                                     homepage_url = final_df.iloc[index_pos_shirts[i],2]
                                     # print(recommendations[i])
                                     image = cv2.imread('images_recommend/{}'.format(index_pos_shirts[i]) + '.png')
                                     image = cv2.resize(image, (224, 224))
+                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                                     st.write(final_df.iloc[index_pos_shirts[i],4])
 
                                     st.image(image)
@@ -195,14 +198,15 @@ if uploaded_image is not None:
                     with st.expander('Top 5 recommndations for Shoes'):
                         if len(index_pos_shoes) != 0:
 
-                            columns = st.columns(5)
+                            columns = st.columns(10)
                             for i in range(len(columns)):
                                 with columns[i]:
                                     homepage_url = final_df.iloc[index_pos_shirts[i],2]
                                     # print(recommendations[i])
                                     image = cv2.imread('images_recommend/{}'.format(index_pos_shoes[i]) + '.png')
                                     image = cv2.resize(image, (224, 224))
-                                    st.write(final_df.iloc[index_pos_shirts[i],4])
+                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                    st.write(final_df.iloc[index_pos_shoes[i],4])
 
                                     st.image(image)
                                     # url = "https://www.streamlit.io"
