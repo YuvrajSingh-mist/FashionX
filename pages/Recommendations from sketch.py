@@ -107,7 +107,7 @@ if uploaded_image is not None:
 
                 similarity.append((cosine_similarity(features_images[i][0].reshape(1, -1), features.reshape(1,-1)), int(features_images[i][1])))
                 # print(features)
-            # print(similarity)
+            print(similarity)
         for i in range(10):
             index_pos.append(sorted(enumerate(similarity), reverse=True, key=lambda x:x[1])[i][1][1])
 #             # index_pos_'{}'.format(file) = []
@@ -133,23 +133,25 @@ if uploaded_image is not None:
     if st.button('Show'):
         for file in os.listdir('uploads2/'):
             
-            with st.expander('Top 5 recommndations for short'):
-                if len(index_pos_short) != 0:
+            with st.expander('Top 5 recommndations for '):
+                if len(index_pos) != 0:
 
                     columns = st.columns(10)
                     for i in range(len(columns)):
                         with columns[i]:
-                            homepage_url = final_df.iloc[index_pos_shirts[i],2]
-                            # print(recommendations[i])
-                            image = cv2.imread('images_recommend/{}'.format(index_pos_short[i]) + '.png')
-                            image = cv2.resize(image, (224, 224))
-                            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                            st.write(final_df.iloc[index_pos_short[i],4])
+                            try:
+                                homepage_url = final_df.iloc[index_pos[i],2]
+                                # print(recommendations[i])
+                                image = cv2.imread('images_recommend/{}'.format(index_pos[i]) + '.png')
+                                image = cv2.resize(image, (224, 224))
+                                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                st.write(final_df.iloc[index_pos[i],4])
 
-                            st.image(image)
-                            # url = "https://www.streamlit.io"
-                            st.write("[Explore](%s)" % homepage_url)
-
+                                st.image(image)
+                                # url = "https://www.streamlit.io"
+                                st.write("[Explore](%s)" % homepage_url)
+                            except:
+                                continue
                 else:
                     st.write('None')
 

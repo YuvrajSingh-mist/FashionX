@@ -34,13 +34,16 @@ st.markdown("<h1 style='text-align: center; color: white;'>Recommendations from 
 st.divider()
 
 
-features_images = pickle.load(open('features.pkl', 'rb'))
+features_images = pickle.load(open('features_all.pkl', 'rb'))
 final_df = pd.read_csv('final_df.csv')
 # if os.path.exists('runs/'):
 #     os.rmdir('runs/')
 # else:
 #     pass
 
+
+hash_values = dict()
+ls = []
 
 def preprocess(img):
     image = cv2.imread(img)
