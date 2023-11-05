@@ -5,11 +5,11 @@ import gc
 
 i='skirt'
 
-if os.path.exists('hed_images/{}'.format(i)) == False:
-    os.mkdir('hed_images/{}'.format(i))
+if os.path.exists('pencil_sketches/{}'.format(i)) == False:
+    os.mkdir('pencil_sketches/{}'.format(i))
 
-for img in tqdm(os.listdir('runs/detect/predict/crops/{}/'.format(i))):
-    image = cv2.imread('runs/detect/predict/crops/{}/'.format(i) + img)
+for img in tqdm(os.listdir('myntradataset/images/')):
+    image = cv2.imread('myntradataset/images/' + img)
     grayimage = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray_not = cv2.bitwise_not(grayimage)
     blur = cv2.GaussianBlur(gray_not, (21,21), 0)
@@ -17,5 +17,5 @@ for img in tqdm(os.listdir('runs/detect/predict/crops/{}/'.format(i))):
     
     sketch= cv2.divide(grayimage, invert_blur, scale=255.0) 
     
-    cv2.imwrite('hed_images/{}/'.format(i) + img, sketch)
+    cv2.imwrite('pencil_sketches/' + img, sketch)
     gc.collect()
