@@ -12,6 +12,7 @@ import requests
 from streamlit_option_menu import option_menu
 from streamlit_extras.switch_page_button import switch_page
 from streamlit_card import card
+from numpy.linalg import norm
 from PIL import Image
 import tensorflow as tf
 import keras
@@ -21,16 +22,25 @@ from tensorflow.keras.applications.resnet50 import preprocess_input
 from tensorflow import expand_dims
 from sklearn.metrics.pairwise import cosine_similarity
 from ultralytics import YOLO
+from tensorflow.keras.layers import GlobalMaxPooling2D
+from keras import Sequential
+from keras.layers import Dense, Flatten
+from numpy.linalg import norm
 
 model = YOLO('best.pt')
-vgg16 = VGG16(include_top=False, weights='imagenet', input_shape=(224,224, 3), pooling='avg')
+conv_base = ResNet50(include_top=False, weights='imagenet', input_shape=(224,224, 3))
+conv_base.trainable = False
+
+resnet50 = Sequential()
+resnet50.add(conv_base)
+resnet50.add(GlobalMaxPooling2D())
 
 
 st.set_page_config(
     page_title = 'FashionX'
 )
 
-st.markdown("<h1 style='text-align: center; color: white;'>Recommendations from image</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: white;'>Recommendations from sketches</h1>", unsafe_allow_html=True)
 st.divider()
 
 
@@ -98,16 +108,16 @@ if uploaded_image is not None:
             similarity=[]
             ls=[]
             # image = Image.open('results_hed/predict/crops/{}/'.format(file)+ img)
-            image = preprocess('uploads2/'+ img)
+            features = preprocess('uploads2/'+ img)
             # print(img)
 
-            features = vgg16.predict(image).flatten()
+            # features = vgg16.predict(image).flatten()
             # print(features)
             for i in range(len(features_images)):
 
-                similarity.append((cosine_similarity(features_images[i][0].reshape(1, -1), features.reshape(1,-1)), int(features_images[i][1])))
+                similarity.append((cosine_similarity(features_images[i][0].reshape(1, -1), features.reshape(1,-1))))
                 # print(features)
-            print(similarity)
+            # print(similarity)
         for i in range(10):
             index_pos.append(sorted(enumerate(similarity), reverse=True, key=lambda x:x[1])[i][1][1])
 #             # index_pos_'{}'.format(file) = []
@@ -129,11 +139,11 @@ if uploaded_image is not None:
     # print(index_pos_shirts)  
     # print(index_pos_shoes)  
     # print(index_pos_shorts)  
-    print(index_pos)
+    # print(index_pos)
     if st.button('Show'):
         for file in os.listdir('uploads2/'):
             
-            with st.expander('Top 5 recommndations for short'):
+            with st.expander('Top 5 recommndations for '):
                 if len(index_pos) != 0:
 
                     columns = st.columns(10)
@@ -142,7 +152,7 @@ if uploaded_image is not None:
                             try:
                                 homepage_url = final_df.iloc[index_pos[i],2]
                                 # print(recommendations[i])
-                                image = cv2.imread('images_recommend/{}'.format(index_pos[i]) + '.png')
+                                image = cv2.imread('images_recommend/{}'.format(index_pos[i]) + '.jpg')
                                 image = cv2.resize(image, (224, 224))
                                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                                 st.write(final_df.iloc[index_pos[i],4])
