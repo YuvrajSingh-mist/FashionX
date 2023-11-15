@@ -19,3 +19,4 @@ st.set_page_config(
 st.markdown("<h1 style='text-align: center; color: white;'>FashionX</h1>", unsafe_allow_html=True)
 st.divider()
 
+

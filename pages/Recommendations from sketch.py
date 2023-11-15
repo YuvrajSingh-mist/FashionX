@@ -27,14 +27,29 @@ from keras import Sequential
 from keras.layers import Dense, Flatten
 from numpy.linalg import norm
 
-model = YOLO('best.pt')
-conv_base = ResNet50(include_top=False, weights='imagenet', input_shape=(224,224, 3))
-conv_base.trainable = False
 
-resnet50 = Sequential()
-resnet50.add(conv_base)
-resnet50.add(GlobalMaxPooling2D())
 
+from keras.models import Model
+from keras.preprocessing.image import load_img
+from keras.preprocessing.image import img_to_array
+from keras.applications.vgg16 import preprocess_input
+from keras.applications.vgg16 import decode_predictions
+from keras.applications.vgg16 import VGG16
+import gc
+
+# model = YOLO('best.pt')
+# conv_base = ResNet50(include_top=False, weights='imagenet', input_shape=(224,224, 3))
+# conv_base.trainable = False
+
+# resnet50 = Sequential()
+# resnet50.add(conv_base)
+# resnet50.add(GlobalMaxPooling2D())
+def vgg():
+    vgg16 = VGG16(weights='imagenet', input_shape = (224,224,3), include_top=False)
+    for layers in vgg16.layers:
+        layers.trainable=False
+    
+    return vgg16
 
 st.set_page_config(
     page_title = 'FashionX'
@@ -43,190 +58,223 @@ st.set_page_config(
 st.markdown("<h1 style='text-align: center; color: white;'>Recommendations from sketches</h1>", unsafe_allow_html=True)
 st.divider()
 
+def features_image_drawings():
+    features_images = pickle.load(open('embeddings_images_20000_recommend_drawings_vgg16.pkl', 'rb'))
+    return features_images
 
-features_images = pickle.load(open('extracted_features_pencil_sketch_images.pkl', 'rb'))
+def features_image_sketch():
+    features_images = pickle.load(open('sketches_8000_embeddings.pkl', 'rb'))
+    return features_images
+
+
 final_df = pd.read_csv('final_df.csv')
 # if os.path.exists('runs/'):
 #     os.rmdir('runs/')
 # else:
 #     pass
 
+filenames_drawings = pickle.load(open('images_recommend_20000_filenames_drawings.pkl', 'rb'))
+filenames_sketch = pickle.load(open('sketches_8000_filenames.pkl', 'rb'))
+
+def extract(img_path, vgg16):
+    img = load_img(img_path, target_size=(224, 224))
+    img_array = img_to_array(img)
+    expanded_img = np.expand_dims(img_array,axis=0)
+    preprocessed_img = preprocess_input(expanded_img)
     
-def preprocess(img):
-    image = cv2.imread(img)
-    image = cv2.resize(image,(224, 224))
-    exp_image = expand_dims(image, axis=0)
-    preprocessed_image = preprocess_input(exp_image)
-    return preprocessed_image
+    result = vgg16.predict(preprocessed_img, verbose=0).flatten()
+    return result
 
 
-
-def save_uploaded_image(image):
+def save_uploaded_image_outline(image):
     try:
-        with open(os.path.join('uploads2', image.name), 'wb') as f:
+        with open(os.path.join('uploads2/', image.name), 'wb') as f:
             f.write(image.getbuffer())
             return True
     except:
         return False
     
-uploaded_image = st.file_uploader('Upload an image')
+def save_uploaded_image_sketch(image):
+    try:
+        with open(os.path.join('uploads3/', image.name), 'wb') as f:
+            f.write(image.getbuffer())
+            return True
+    except:
+        return False
+    
 
+
+        
 ls = []
 
-# index_pos_shirts = []
-# index_pos_pants = []
-# index_pos_shoes = []
-# index_pos_shorts = []
+index_pos_shirts = []
+index_pos_pants = []
+index_pos_shoes = []
+index_pos_shorts = []
 
 index_pos = []
 
-if uploaded_image is not None:
-
-            
-    if save_uploaded_image(uploaded_image):
-        if os.path.exists('results_hed'):
-            shutil.rmtree('results_hed')
-        else:
-            os.mkdir('results_hed')
-            
-        # model.predict(os.path.join('uploads/', uploaded_image.name), save=True, save_txt=True, save_crop=True, project='results_hed')
+if st.checkbox('Upload a drawing/outline'):
+    if os.path.exists('uploads2/'):
+        shutil.rmtree('uploads2/')
+        os.mkdir('uploads2/')
+    # else:
+    else:
+        os.mkdir('uploads2/')
         
-            
-#         for file in os.listdir('results_hed/predict/crops/'):
+    uploaded_image = st.file_uploader('Upload an outline/drawing')
 
-#             if file in ['shirt', 'jacket', 'dress']:
+    if uploaded_image is not None:
 
-#                 file2 = 'shirt'
+        if save_uploaded_image_outline(uploaded_image):
+        # if save_uploaded_image(uploaded_image):
+        #     if os.path.exists('results_sketches'):
+        #         shutil.rmtree('results_sketches')
+            # else:
+            #     os.mkdir('results_sketches')
 
-#                 os.rename('results_hed/predict/crops/{}/'.format(file), 'results_hed/predict/crops/{}/'.format(file2))
-        
-#         for file in os.listdir('uploads2/'):
-            
-#             # print(file)
-        for img in os.listdir('uploads2/'):
-            # print(img)
+            # model.predict(os.path.join('uploads/', uploaded_image.name), save=True, save_txt=True, save_crop=True, project='results_sketches')
+
+
+    #         for file in os.listdir('results_hed/predict/crops/'):
+
+    #             if file in ['shirt', 'jacket', 'dress']:
+
+    #                 file2 = 'shirt'
+
+    #                 os.rename('results_hed/predict/crops/{}/'.format(file), 'results_hed/predict/crops/{}/'.format(file2))
+
+    #         for file in os.listdir('uploads2/'):
+
+    #            # print(file)
             similarity=[]
-            ls=[]
-            # image = Image.open('results_hed/predict/crops/{}/'.format(file)+ img)
-            features = preprocess('uploads2/'+ img)
-            # print(img)
+            features_images_drawings = features_image_drawings()
+            # if st.checkbox('Recommend'):
+            #     for file in os.listdir('results/predict/crops/'):
+            similarity = []
+            if st.checkbox('Recommend'):
+                for img in os.listdir('uploads2/'):
 
-            # features = vgg16.predict(image).flatten()
-            # print(features)
-            for i in range(len(features_images)):
+                    vgg16 = vgg()
+                    # gc.collect()
+                    features = extract('uploads2/' + img, vgg16)
 
-                similarity.append((cosine_similarity(features_images[i][0].reshape(1, -1), features.reshape(1,-1))))
-                # print(features)
-            # print(similarity)
-        for i in range(10):
-            index_pos.append(sorted(enumerate(similarity), reverse=True, key=lambda x:x[1])[i][1][1])
-#             # index_pos_'{}'.format(file) = []
-#             # print(file)
-#             if file == 'shirt':
-#                 index_pos_shirts.append(sorted(enumerate(similarity), reverse=True, key=lambda x:x[1])[i][1][1])
+                    for i in range(len(features_images_drawings)):
 
-#             elif file == 'shorts':
-#                 index_pos_shorts.append(sorted(enumerate(similarity), reverse=True, key=lambda x:x[1])[i][1][1])
+                        similarity.append((cosine_similarity(features.reshape(1,-1), features_images_drawings[i].reshape(1, -1))))
 
-#             elif file == 'pants':
-#                 index_pos_pants.append(sorted(enumerate(similarity), reverse=True, key=lambda x:x[1])[i][1][1])
+                    similarity = sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])
+                    print(similarity)
 
-#             elif file == 'shoe':
-#                 index_pos_shoes.append(sorted(enumerate(similarity), reverse=True, key=lambda x:x[1])[i][1][1])
-               
+                    if st.checkbox('Show'):
+                        for file in os.listdir('uploads2/'):
+    #                         if file == 'short':
+                                with st.expander('Top 10 recommndations'):
+    #                                 if len(index_pos_shorts) != 0:
 
-    # print(index_pos_pants)
-    # print(index_pos_shirts)  
-    # print(index_pos_shoes)  
-    # print(index_pos_shorts)  
-    # print(index_pos)
-    if st.button('Show'):
-        for file in os.listdir('uploads2/'):
-            
-            with st.expander('Top 5 recommndations for '):
-                if len(index_pos) != 0:
+                                    columns = st.columns(10)
+                                    for i in range(len(columns)):
+                                        with columns[i]:
+                                            temp = ' '.join(filenames_drawings[similarity[i][0]].split('/')[-1:])
+                                            temp = temp.split('.')[-2]
+                                            print(temp)
+                                            # print(filenames[similarity[0][0]].split('/')[-1:])
+                                            # path='/'.join(filenames_drawings[similarity[i][0]].split('/')[-1:])
+                                            # print('images/' +'/'.join(filenames[similarity[0][0]].split('/')[-1:]))
+                                            print('images/' + temp + '.jpg')
+                                            image = cv2.imread(('images/' + temp + '.jpg'))
+                                            # image = cv2.resize(image, (224, 224))
+                                            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                            # st.write(final_df.iloc[index_pos_shirts[i],4])
 
-                    columns = st.columns(10)
-                    for i in range(len(columns)):
-                        with columns[i]:
-                            try:
-                                homepage_url = final_df.iloc[index_pos[i],2]
-                                # print(recommendations[i])
-                                image = cv2.imread('images_recommend/{}'.format(index_pos[i]) + '.jpg')
-                                image = cv2.resize(image, (224, 224))
-                                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                                st.write(final_df.iloc[index_pos[i],4])
+                                            st.image(image)
 
-                                st.image(image)
-                                # url = "https://www.streamlit.io"
-                                st.write("[Explore](%s)" % homepage_url)
-                            except:
-                                continue
-                else:
-                    st.write('None')
+                    # else:
+                    #         st.write('None')
 
-#             elif file == 'pants':
-#                 with st.expander('Top 5 recommndations for Pants'):
-#                     if len(index_pos_pants) != 0:
-
-#                         columns = st.columns(10)
-#                         for i in range(len(columns)):
-#                             with columns[i]:
-#                                 homepage_url = final_df.iloc[index_pos_shirts[i],2]
-#                                 # print(recommendations[i])
-#                                 image = cv2.imread('images_recommend/{}'.format(index_pos_pants[i]) + '.png')
-#                                 image = cv2.resize(image, (224, 224))
-#                                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#                                 st.write(final_df.iloc[index_pos_pants[i],4])
-
-#                                 st.image(image)
-#                                 # url = "https://www.streamlit.io"
-#                                 st.write("[Explore](%s)" % homepage_url)
-
-#                     else:
-#                         st.write('None')
-
-#             elif file == 'shirt':
-#                 with st.expander('Top 5 recommndations for Shirts'):
-#                     if len(index_pos_shirts) != 0:
+st.divider()
 
 
-#                         columns = st.columns(10)
-#                         for i in range(len(columns)):
-#                             with columns[i]:
-#                                 homepage_url = final_df.iloc[index_pos_shirts[i],2]
-#                                 # print(recommendations[i])
-#                                 image = cv2.imread('images_recommend/{}'.format(index_pos_shirts[i]) + '.png')
-#                                 image = cv2.resize(image, (224, 224))
-#                                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#                                 st.write(final_df.iloc[index_pos_shirts[i],4])
-
-#                                 st.image(image)
-#                                 # url = "https://www.streamlit.io"
-#                                 st.write("[Explore](%s)" % homepage_url)
+# else:
 
 
-#                     else:
-#                         st.write('None')
+if st.checkbox('Upload a sketch'):
+    
+    if os.path.exists('uploads3/'):
+        shutil.rmtree('uploads3/')
+        os.mkdir('uploads3/')
+    # else:
+    else:
+        os.mkdir('uploads3/')
+        
+    uploaded_image = st.file_uploader('Upload a sketch')
 
-#             elif file == 'shoe':
-#                 with st.expander('Top 5 recommndations for Shoes'):
-#                     if len(index_pos_shoes) != 0:
+    if uploaded_image is not None:
+        if save_uploaded_image_sketch(uploaded_image):
 
-#                         columns = st.columns(10)
-#                         for i in range(len(columns)):
-#                             with columns[i]:
-#                                 homepage_url = final_df.iloc[index_pos_shirts[i],2]
-#                                 # print(recommendations[i])
-#                                 image = cv2.imread('images_recommend/{}'.format(index_pos_shoes[i]) + '.png')
-#                                 image = cv2.resize(image, (224, 224))
-#                                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-#                                 st.write(final_df.iloc[index_pos_shoes[i],4])
+        # if save_uploaded_image(uploaded_image):
+        #     if os.path.exists('results_sketches'):
+        #         shutil.rmtree('results_sketches')
+            # else:
+            #     os.mkdir('results_sketches')
 
-#                                 st.image(image)
-#                                 # url = "https://www.streamlit.io"
-#                                 st.write("[Explore](%s)" % homepage_url)
+            # model.predict(os.path.join('uploads/', uploaded_image.name), save=True, save_txt=True, save_crop=True, project='results_sketches')
 
-#                     else:
-#                         st.write('None')
 
+    #         for file in os.listdir('results_hed/predict/crops/'):
+
+    #             if file in ['shirt', 'jacket', 'dress']:
+
+    #                 file2 = 'shirt'
+
+    #                 os.rename('results_hed/predict/crops/{}/'.format(file), 'results_hed/predict/crops/{}/'.format(file2))
+
+    #         for file in os.listdir('uploads2/'):
+
+    #            # print(file)
+            similarity=[]
+            features_images_sketch = features_image_sketch()
+        
+            if st.checkbox('Recommend'):
+                # for file in os.listdir('results/predict/crops/'):
+                #     similarity = []
+                for img in os.listdir('uploads3/'):
+
+                    vgg16 = vgg()
+                    # gc.collect()
+                    features = extract('uploads3/' + img, vgg16)
+
+                    for i in range(len(features_images_sketch)):
+
+                        similarity.append((cosine_similarity(features.reshape(1,-1), features_images_sketch[i].reshape(1, -1))))
+
+                    similarity = sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])
+                    # print(similarity)
+
+                    if st.checkbox('Show'):
+                        # for file in os.listdir('uploads/'):
+                        #     if file == 'short':
+                        with st.expander('Top 10 recommndations'):
+                    
+                            columns = st.columns(10)
+                            for i in range(len(columns)):
+                                with columns[i]:
+                                    # print(filenames_sketch[similarity[i][0]].split('/')[-1:])
+                                    temp = ' '.join(filenames_sketch[similarity[i][0]].split('/')[-1:])
+                                    temp = temp.split('.')[-2]
+                                    # print(temp)
+                                    # print(filenames[similarity[0][0]].split('/')[-1:])
+                                    # path='/'.join(filenames_sketch[similarity[i][0]].split('/')[-1:])
+                                    # print('images/' +'/'.join(filenames[similarity[0][0]].split('/')[-1:]))
+                                    print('images/' + temp + '.jpg')
+                                    image = cv2.imread(('images/' + temp + '.jpg'))
+                                    # image = cv2.resize(image, (224, 224))
+                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                    # st.write(final_df.iloc[index_pos_shirts[i],4])
+
+                                    st.image(image)
+
+                            # else:
+                            #     st.write('None')
+
+st.divider()
