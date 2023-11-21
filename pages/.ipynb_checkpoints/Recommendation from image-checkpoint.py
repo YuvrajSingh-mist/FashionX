@@ -82,12 +82,11 @@ def features_image():
 
 # ls = []
 # @st.cache_resource
-def model():
-    model = YOLO('best.pt')
+model = YOLO('best.pt')
     
-    model.predict(os.path.join('uploads/', uploaded_image.name), save=True,  save_txt=True, save_crop=True, project='results')
-    
-    
+   
+
+       
     
 def extract(img_path, vgg16):
     img = image.load_img(img_path, target_size=(224, 224))
@@ -107,12 +106,38 @@ def save_uploaded_image(image):
     except:
         return False
 
+    
+def save_uploaded_image_multi(image):
+    try:
+        with open(os.path.join('uploads4', image.name), 'wb') as f:
+            f.write(image.getbuffer())
+            return True
+    except:
+        return False    
+    
 if os.path.exists('uploads/'):
     shutil.rmtree('uploads/')
 
 else:
     os.mkdir('uploads/')
-        
+
+similarity_multi =[]
+def predict_multi(path, features_images):
+    
+    for file in os.listdir('results_multi/predict/crops/'.format(path)):
+        similarity = []
+        for img in os.listdir('results/predict/crops/{}/'.format(file)):
+
+            vgg16 = vgg()
+            # gc.collect()
+            features = extract('results/predict/crops/{}/'.format(file) + img, vgg16)
+
+            for i in range(len(features_images)):
+
+                similarity_multi =[].append((cosine_similarity(features.reshape(1,-1), features_images[i].reshape(1, -1))))
+
+            similarity_multi =[] = sorted(list(enumerate(similarity_multi =[])), reverse=True, key=lambda x: x[1])
+
 
 
 ls = []
@@ -122,6 +147,8 @@ index_pos_pants = []
 index_pos_shoes = []
 index_pos_shorts = []
 index_pos_jacket = []
+
+
 filenames = pickle.load(open('images_recommend_15000_filenames.pkl', 'rb'))
 if st.checkbox('Upload a single photo: '):
     uploaded_image = st.file_uploader('Upload an image')
@@ -133,7 +160,7 @@ if st.checkbox('Upload a single photo: '):
             if os.path.exists('results'):
                 shutil.rmtree('results')
             
-            model()
+            model.predict(os.path.join('uploads/', uploaded_image.name), save=True,  save_txt=True, save_crop=True, project='results')
                 
             # gc.collect()
 
@@ -373,221 +400,238 @@ if st.checkbox('Upload a single photo: '):
                         else:
                             st.write('None')
 
-    
+ls = []
+
+index_pos_shirts = []
+index_pos_pants = []
+index_pos_shoes = []
+index_pos_shorts = []
+index_pos_jacket = []
     
 if st.checkbox('Upload a multi-person photo: '):
-    uploaded_image = st.file_uploader('Upload an image')
+    uploaded_image = st.file_uploader('Upload a group image')
+    
+    if os.path.exists('uploads4/'):
+        shutil.rmtree('uploads4/')
+        os.mkdir('uploads4/')
+    # else:
+    else:
+        os.mkdir('uploads4/')
+        
     if uploaded_image is not None:
         
-        if save_uploaded_image(uploaded_image):
-            if os.path.exists('results'):
-                shutil.rmtree('results')
-            else:
-                os.mkdir('results')
+        if save_uploaded_image_multi(uploaded_image):
+            
+            # if os.path.exists('results'):
+            #     shutil.rmtree('results')
+            # else:
+            #     os.mkdir('results')
 
-            similarity = []
-            for file in os.listdir('uploads/'):
+            if os.path.exists('results_multi'):
+                shutil.rmtree('results_multi')
+                
+            if os.path.exists('results_groups'):
+                shutil.rmtree('results_groups')
+            
+            
+            model.predict(os.path.join('uploads4/', uploaded_image.name), save=True,  save_txt=True, save_crop=True, project='results_multi')  
+            # gc.collect()
 
-                features = extract('uploads/' + file)
+#                 for file in os.listdir('results/'):
 
-    #         for i in range(len(features_images)):
+#                     features = extract('results/' + file)
 
-    #             similarity.append((cosine_similarity(features_images[i].reshape(1, -1), features.reshape(1,-1))))
+               
+                # print(similarity)
 
-    #         similarity = sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])[i]
-    #         print(similarity)
-
-            # for i in range(5):
-            #     st.image('myntradataset/images/' + similarity)
-            model.predict(os.path.join('uploads/', uploaded_image.name), save=True,  save_txt=True, save_crop=True, project='results')
-
-
-    # #         for file in os.listdir('results/predict/crops/'):
-
-    # #             if file in ['shirt', 'jacket', 'dress']:
-
-    # #                 file2 = 'shirt'
-
-    # #                 os.rename('results/predict/crops/{}/'.format(file), 'results/predict/crops/{}/'.format(file2))
-
-            for file in os.listdir('results/predict/crops/'):
-                # indices=[]
-                # ls=[]
-                # print(file)
-                similarity = []
-                for img in os.listdir('results/predict/crops/{}/'.format(file)):
-                    # print(img)
-
-                    # image = Image.open('results/predict/crops/{}/'.format(file)+ img)
-                    # image = preprocess('results/predict/crops/{}/'.format(file)+ img)
-                    # print(img)
-
-                    # features = resnet50.predict(image).flatten()
-                    features=preprocess('results/predict/crops/{}/'.format(file)+ img)
-                    # print(features)
-                    # distances, indices = nn.kneighbors([features, n_neighbors=5])
-                    # for i in range(len(features_images)):
-
-                    # image = Image.open('results_hed/predict/crops/{}/'.format(file)+ img)
-                    # print(img)
-
-                    # features = vgg16.predict(image).flatten()
-                    # print(features)
-                    for i in range(len(features_images)):
-
-                        similarity.append((cosine_similarity(features_images[i].reshape(1, -1), features.reshape(1,-1))))
-                        # print(features)
-                    # print(similarity)
-
-                    # index_pos = 
-    #             # index_pos_'{}'.format(file) = []
-
-                    # indices.append()
-                        # print(features)
-                    # print(similarity)
-                    # for i in range(len(features_images)):
-
-                        # similarity.append((cosine_similarity(features_images[i].reshape(1, -1), features.reshape(1,-1))))
-                    # print(indices)
-                    # print(distances)
-                # print(indices[0][0])
-                    # print(index_pos)
                 # for i in range(5):
-                    # index_pos_'{}'.format(file) = []
-                    # print(file)
-                    if file == 'shirt':
-                        for i in range(5):
-                            index_pos_shirts.append(sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])[i][0])
-                        # print(distances)
-
-                    elif file == 'shorts':
-                        for i in range(5):
-                            index_pos_shorts.append(sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])[i][0])
-                        # print(distances)
-
-                    elif file == 'pants':
-                        for i in range(5):
-                            index_pos_pants.append(sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])[i][0])
-                        # print(distances)
+                #     st.image('myntradataset/images/' + similarity)
 
 
-                    elif file == 'shoe':
-                        for i in range(5):
-                            index_pos_shoes.append(sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])[i][0])
-                        # print(distances)
-                    elif file == 'jacket':
-                        for i in range(5):
-                            index_pos_jacket.append(sorted(list(enumerate(similarity)), reverse=True, key=lambda x: x[1])[i][0])
+
+#                 for file in os.listdir('results/predict/crops/'):
+
+#                     if file in ['shirt', 'jacket', 'dress']:
+
+#                         file2 = 'shirt'
+
+#                         os.rename('results/predict/crops/{}/'.format(file), 'results/predict/crops/{}/'.format(file2))
+        features_images = features_image()
+        number = 0
+        if st.checkbox('Recommend'):
+            for file in os.listdir('results/predict/crops/persons/'):
+                ls = []
+
+                index_pos_shirts = []
+                index_pos_pants = []
+                index_pos_shoes = []
+                index_pos_shorts = []
+                index_pos_jacket = []
+                
+                similarity_multi = []
+                # similarity = []
+                model.predict(os.path.join('results/predict/crops/persons/{}'.format(file), uploaded_image.name), save=True,  save_txt=True, save_crop=True, project='results_multi')  
+                for file in os.listdir('results_multi/predict/crops/persons/'.format(file)):
+                    
+                    predict_multi('results_multi/predict/crops/persons/'.format(file) + img, features_images)
+                    number+=1
+
+                if file == 'shirt':
+                    for i in range(10):
+                        print(similarity[i][0])
+                        index_pos_shirts.append(similarity_multi[i][0])
+                    # print(distances)
+
+                elif file == 'shorts':
+                    for i in range(10):
+                        index_pos_shorts.append(similarity_multi[i][0])
+                    # print(distances)
+
+                elif file == 'pants':
+                    for i in range(10):
+                        index_pos_pants.append(similarity_multi[i][0])
+                    # print(distances)
+
+
+                elif file == 'shoe':
+                    for i in range(10):
+                        index_pos_shoes.append(similarity_multi[i][0])
+                    # print(distances)
+                    
+                elif file == 'jacket':
+                    for i in range(10):
+                        index_pos_jacket.append(similarity_multi[i][0])
 
             print(index_pos_pants)
             print(index_pos_shirts)  
             print(index_pos_shoes)  
             print(index_pos_shorts)  
-            # if st.button('Show'):
-            for file in os.listdir('results/predict/crops/'):
-                if file == 'short':
-                    with st.expander('Top 5 recommndations for short'):
-                        if len(index_pos_shorts) != 0:
 
-                            columns = st.columns(5)
-                            for i in range(len(columns)):
-                                with columns[i]:
-                                    # homepage_url = final_df.iloc[index_pos_shirts[i],2]
-                                    # print(recommendations[i])
-                                    image = cv2.imread('images/{}'.format(filenames[index_pos_shorts[i]]))
-                                    # image = cv2.resize(image, (224, 224))
-                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                                    # st.write(final_df.iloc[index_pos_short[i],4])
+            # if st.checkbox('Show'):
+            with st.expander('Person_{}'.format(number)):
+                st.image('results_multi/predict/crops/persons/'.format(file) + img)
+                for file in os.listdir('results/predict/crops/'):
+                    if file == 'short':
+                        with st.expander('Top 5 recommndations for short'):
+                            if len(index_pos_shorts) != 0:
 
-                                    st.image(image)
-                                    # url = "https://www.streamlit.io"
-                                    # st.write("[Explore](%s)" % homepage_url)
+                                columns = st.columns(10)
+                                for i in range(len(columns)):
+                                    with columns[i]:
+                                        temp = ' '.join(filenames[index_pos_shorts[i]].split('/')[-1:])
+                                        temp = temp.split('.')[-2]
+                                        print(temp)
+                                        # print(filenames[similarity[0][0]].split('/')[-1:])
+                                        path='/'.join(filenames[similarity_multi[i][0]].split('/')[-1:])
+                                        # print('images/' +'/'.join(filenames[similarity[0][0]].split('/')[-1:]))
+                                        print('images/' + temp + '.jpg')
+                                        image = cv2.imread(('images/' + temp + '.jpg'))
+                                        # image = cv2.resize(image, (224, 224))
+                                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                        # st.write(final_df.iloc[index_pos_shirts[i],4])
 
-                        else:
-                            st.write('None')
+                                        st.image(image)
 
-                elif file == 'pants':
-                    with st.expander('Top 5 recommndations for Pants'):
-                        if len(index_pos_pants) != 0:
+                            else:
+                                st.write('None')
 
-                            columns = st.columns(5)
-                            for i in range(len(columns)):
-                                with columns[i]:
-                                    # homepage_url = final_df.iloc[index_pos_shirts[i],2]
-                                    # print(recommendations[i])
-                                    image = cv2.imread('images/{}'.format(filenames[index_pos_pants[i]]))
-                                    # image = cv2.resize(image, (224, 224))
-                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                                    # st.write(final_df.iloc[index_pos_pants[i],4])
+                    elif file == 'pants':
+                        with st.expander('Top 5 recommndations for Pants'):
+                            if len(index_pos_pants) != 0:
 
-                                    st.image(image)
-                                    # url = "https://www.streamlit.io"
-                                    # st.write("[Explore](%s)" % homepage_url)
+                                columns = st.columns(10)
+                                for i in range(len(columns)):
+                                    with columns[i]:
+                                        temp = ' '.join(filenames[index_pos_pants[i]].split('/')[-1:])
+                                        temp = temp.split('.')[-2]
+                                        print(temp)
+                                        # print(filenames[similarity[0][0]].split('/')[-1:])
+                                        path='/'.join(filenames[similarity_multi[i][0]].split('/')[-1:])
+                                        # print('images/' +'/'.join(filenames[similarity[0][0]].split('/')[-1:]))
+                                        print('images/' + temp + '.jpg')
+                                        image = cv2.imread(('images/' + temp + '.jpg'))
+                                        # image = cv2.resize(image, (224, 224))
+                                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                        # st.write(final_df.iloc[index_pos_shirts[i],4])
 
-                        else:
-                            st.write('None')
+                                        st.image(image)
 
-                elif file == 'shirt':
-                    with st.expander('Top 5 recommndations for Shirts'):
-                        if len(index_pos_shirts) != 0:
+                            else:
+                                st.write('None')
 
-
-                            columns = st.columns(5)
-                            for i in range(len(columns)):
-                                with columns[i]:
-                                    # homepage_url = final_df.iloc[index_pos_shirts[i],2]
-                                    # print(recommendations[i])
-                                    image = cv2.imread('images/{}'.format(filenames[index_pos_shirts[i]]))
-                                    # image = cv2.resize(image, (224, 224))
-                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                                    # st.write(final_df.iloc[index_pos_shirts[i],4])
-
-                                    st.image(image)
-                                    # url = "https://www.streamlit.io"
-                                    # st.write("[Explore](%s)" % homepage_url)
+                    elif file == 'shirt':
+                        with st.expander('Top 5 recommndations for Shirts'):
+                            if len(index_pos_shirts) != 0:
 
 
-                        else:
-                            st.write('None')
+                                columns = st.columns(10)
+                                for i in range(len(columns)):
+                                    with columns[i]:
+                                        # homepage_url = final_df.iloc[index_pos_shirts[i],2]
+                                          # print(filenames[similarity[i][0]])
+                                        temp = ' '.join(filenames[index_pos_shirts[i]].split('/')[-1:])
+                                        temp = temp.split('.')[-2]
+                                        print(temp)
+                                        # print(filenames[similarity[0][0]].split('/')[-1:])
+                                        path='/'.join(filenames[similarity_multi[i][0]].split('/')[-1:])
+                                        # print('images/' +'/'.join(filenames[similarity[0][0]].split('/')[-1:]))
+                                        print('images/' + temp + '.jpg')
+                                        image = cv2.imread(('images/' + temp + '.jpg'))
+                                        # image = cv2.resize(image, (224, 224))
+                                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                        # st.write(final_df.iloc[index_pos_shirts[i],4])
 
-                elif file == 'shoe':
-                    with st.expander('Top 5 recommndations for Shoes'):
-                        if len(index_pos_shoes) != 0:
+                                        st.image(image)
+    #                                     # url = "https://www.streamlit.io"
+    #                                     # st.write("[Explore](%s)" % homepage_url)
 
-                            columns = st.columns(5)
-                            for i in range(len(columns)):
-                                with columns[i]:
-                                    # homepage_url = final_df.iloc[index_pos_shirts[i],2]
-                                    # print(recommendations[i])
-                                    image = cv2.imread('images/{}'.format(filenames[index_pos_shoes[i]]))
-                                    # image = cv2.resize(image, (224, 224))
-                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                                    # st.write(final_df.iloc[index_pos_shoes[i],4])
 
-                                    st.image(image)
-                                    # url = "https://www.streamlit.io"
-                                    # st.write("[Explore](%s)" % homepage_url)
+                            else:
+                                st.write('None')
 
-                        else:
-                            st.write('None')
-                elif file == 'jacket':
-                    with st.expander('Top 5 recommndations for Jacket'):
-                        if len(index_pos_jacket) != 0:
+                    elif file == 'shoe':
+                        with st.expander('Top 5 recommndations for Shoes'):
+                            if len(index_pos_shoes) != 0:
 
-                            columns = st.columns(5)
-                            for i in range(len(columns)):
-                                with columns[i]:
-                                    # homepage_url = final_df.iloc[index_pos_shirts[i],2]
-                                    # print(recommendations[i])
-                                    image = cv2.imread('images/{}'.format(filenames[index_pos_jacket[i]]))
-                                    # image = cv2.resize(image, (224, 224))
-                                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                                    # st.write(final_df.iloc[index_pos_shoes[i],4])
+                                columns = st.columns(10)
+                                for i in range(len(columns)):
+                                    with columns[i]:
+                                        temp = ' '.join(filenames[index_pos_shoes[i]].split('/')[-1:])
+                                        temp = temp.split('.')[-2]
+                                        print(temp)
+                                        # print(filenames[similarity[0][0]].split('/')[-1:])
+                                        path='/'.join(filenames[similarity_multi[i][0]].split('/')[-1:])
+                                        # print('images/' +'/'.join(filenames[similarity[0][0]].split('/')[-1:]))
+                                        print('images/' + temp + '.jpg')
+                                        image = cv2.imread(('images/' + temp + '.jpg'))
+                                        # image = cv2.resize(image, (224, 224))
+                                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                        # st.write(final_df.iloc[index_pos_shirts[i],4])
 
-                                    st.image(image)
-                                    # url = "https://www.streamlit.io"
-                                    # st.write("[Explore](%s)" % homepage_url)
+                                        st.image(image)
 
-                        else:
-                            st.write('None')
+                            else:
+                                st.write('None')
+                    elif file == 'jacket':
+                        with st.expander('Top 5 recommndations for Jacket'):
+                            if len(index_pos_jacket) != 0:
 
+                                columns = st.columns(10)
+                                for i in range(len(columns)):
+                                    with columns[i]:
+                                        temp = ' '.join(filenames[index_pos_jacket[i]].split('/')[-1:])
+                                        temp = temp.split('.')[-2]
+                                        print(temp)
+                                        # print(filenames[similarity[0][0]].split('/')[-1:])
+                                        path='/'.join(filenames[similarity_multi[i][0]].split('/')[-1:])
+                                        # print('images/' +'/'.join(filenames[similarity[0][0]].split('/')[-1:]))
+                                        print('images/' + temp + '.jpg')
+                                        image = cv2.imread(('images/' + temp + '.jpg'))
+                                        # image = cv2.resize(image, (224, 224))
+                                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                                        # st.write(final_df.iloc[index_pos_shirts[i],4])
+
+                                        st.image(image)
+
+                            else:
+                                st.write('None')
